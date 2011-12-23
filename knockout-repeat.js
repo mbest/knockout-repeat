@@ -53,8 +53,9 @@ ko.bindingHandlers['repeat'] = {
                         parent.insertBefore(newNode, endNode.nextSibling);
                     else
                         parent.appendChild(newNode);    
-                    endNode = newNode;
+                    newNode.setAttribute('data-repeat-index', i);
                     allRepeatNodes[i] = newNode;
+                    endNode = newNode;
                 }
                 // Apply bindings to inserted nodes
                 for (i = startInsert; i < repeatCount; i++) {
