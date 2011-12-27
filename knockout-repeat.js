@@ -1,7 +1,7 @@
 ko.bindingHandlers['repeat'] = {
     'init': function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         // initialize optional parameters
-        var repeatIndex = '$index', repeatData = '$item', repeatBind; 
+        var repeatIndex = '$index', repeatData = '$item', repeatBind;
         var repeatParam = ko.utils.unwrapObservable(valueAccessor());
         if (typeof repeatParam == 'object') {
             if ('index' in repeatParam) repeatIndex = repeatParam['index'];
@@ -63,7 +63,7 @@ ko.bindingHandlers['repeat'] = {
                     newContext[repeatIndex] = i;
                     if (repeatArray) {
                         newContext[repeatData] = (function(index) { return function() { 
-                            return ko.utils.unwrapObservable(repeatArray)[index]; 
+                            return ko.utils.unwrapObservable(ko.utils.unwrapObservable(repeatArray)[index]); 
                         }; })(i);
                     }
                     ko.applyBindings(newContext, allRepeatNodes[i]);
