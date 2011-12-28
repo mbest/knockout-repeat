@@ -73,10 +73,10 @@ ko.bindingHandlers['repeat'] = {
                 delete newContext['$repeatOptions'];
                 newContext[o.repeatIndex] = i;
                 if (o.repeatArray) {
-                    newContext[o.repeatData] = (function(index) { return ko.dependentObservable(function() {
+                    newContext[o.repeatData] = (function(index) { return function() {
                         o.repeatUpdate();   // for dependency tracking
                         return ko.utils.unwrapObservable(o.repeatArray[index]); 
-                    }, null, {'deferEvaluation': true, 'disposeWhenNodeIsRemoved': allRepeatNodes[index]}); })(i);
+                    }; })(i);
                 }
                 ko.applyBindings(newContext, allRepeatNodes[i]);
             }
