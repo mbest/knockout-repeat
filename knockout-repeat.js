@@ -31,17 +31,19 @@ ko.bindingHandlers['repeat'] = {
         // Use a dependent observable to manage (add/remove) sibling elements
         var allRepeatNodes = [];
         var parent = element.parentNode;
+        var repeatUpdate = ko.observable();
+        var repeatArray;
         ko.dependentObservable(function() {
             var repeatCount = ko.utils.unwrapObservable(valueAccessor());
-            var repeatArray;
             if (typeof repeatCount == 'object') {
                 if ('count' in repeatCount) {
                     repeatCount = ko.utils.unwrapObservable(repeatCount['count']);
                 } else if ('foreach' in repeatCount) {
-                    repeatArray = repeatCount['foreach']; 
-                    repeatCount = ko.utils.unwrapObservable(repeatArray)['length'];
+                    repeatArray = ko.utils.unwrapObservable(repeatCount['foreach']); 
+                    repeatCount = repeatArray['length'];
                 }
             } 
+            repeatUpdate.notifySubscribers();
                 
             if (allRepeatNodes.length < repeatCount) {
                 // Array is longer: add nodes to end (also initially populates nodes)
@@ -62,9 +64,10 @@ ko.bindingHandlers['repeat'] = {
                     var newContext = ko.utils.extend(new bindingContext.constructor(), bindingContext);
                     newContext[repeatIndex] = i;
                     if (repeatArray) {
-                        newContext[repeatData] = (function(index) { return function() { 
-                            return ko.utils.unwrapObservable(ko.utils.unwrapObservable(repeatArray)[index]); 
-                        }; })(i);
+                        newContext[repeatData] = (function(index) { return ko.dependentObservable(function() {
+                            repeatUpdate();   // for dependency tracking
+                            return ko.utils.unwrapObservable(repeatArray[index]); 
+                        }, null, {'deferEvaluation': true, 'disposeWhenNodeIsRemoved': allRepeatNodes[index]}); })(i);
                     }
                     ko.applyBindings(newContext, allRepeatNodes[i]);
                 }
