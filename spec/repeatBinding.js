@@ -11,6 +11,18 @@ function prepareTestNode() {
 describe('Binding: Repeat', {
     before_each: prepareTestNode,
 
+    'Should repeat node for specified number of times and have access to index through $index': function() {
+        testNode.innerHTML = "<span data-bind=\"repeat: {count: 5, bind: 'text: $index'}\"></span>";
+        ko.applyBindings(null, testNode);
+        value_of(testNode).should_contain_text('01234');
+    },
+
+    'Should repeat node and descendants for specified number of times and have access to index through $index': function() {
+        testNode.innerHTML = "<div data-bind='repeat: 5'><span data-bind='text: $index'></span></div>";
+        ko.applyBindings(null, testNode);
+        value_of(testNode).should_contain_text('01234');
+    },
+
     'Should not repeat any nodes (and not bind them) if the value is falsey': function() {
         testNode.innerHTML = "<span data-bind='repeat: {foreach: someItem, bind: \"text: someItem.nonExistentChildProp\"}'></span>";
         value_of(testNode.childNodes.length).should_be(1);
@@ -19,7 +31,7 @@ describe('Binding: Repeat', {
         value_of(testNode.childNodes[0].nodeType).should_be(8);
     },
 
-    'Should duplicate descendant nodes for each value in the array value (and have access to value through $item())': function() {
+    'Should duplicate node for each value in the array value (and have access to value through $item())': function() {
         testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, bind: \"text: $item().childProp\"}'></span>";
         var someItems = [
             { childProp: 'first child' },
@@ -29,7 +41,7 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('first childsecond child');
     },
 
-    'Should be able to use with to create a child context': function() {
+    'Should be able to use \'with\' to create a child context': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: \"with: $item()\"}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
             { childProp: 'first child' },
@@ -97,7 +109,7 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('A2B');
     },
 
-    'Should be able to nest repeat and access binding contexts both during and after binding': function() {
+    'Should be able to nest \'repeat\' and access binding contexts both during and after binding': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: items}'>"
                                 + "<div data-bind='repeat: {foreach: $item().children, item: \"$child\"}'>"
                                     + "(Val: <span data-bind='text: $child()'></span>)"

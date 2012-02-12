@@ -1,4 +1,7 @@
+if (!ko.bindingFlags) { ko.bindingFlags = {}; }
+
 ko.bindingHandlers['repeat'] = {
+    'flags': ko.bindingFlags.contentBind,
     'init': function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         // initialize optional parameters
         var repeatIndex = '$index', repeatData = '$item', repeatBind;
