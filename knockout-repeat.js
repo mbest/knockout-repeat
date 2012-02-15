@@ -30,7 +30,7 @@ ko.bindingHandlers['repeat'] = {
             repeatUpdate = ko.observable(),
             repeatArray = undefined;
 
-        ko.dependentObservable(function() {
+        var subscribable = ko.dependentObservable(function() {
             var repeatCount = ko.utils.unwrapObservable(valueAccessor());
             if (typeof repeatCount == 'object') {
                 if ('count' in repeatCount) {
@@ -75,6 +75,6 @@ ko.bindingHandlers['repeat'] = {
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
 
-        return { 'controlsDescendantBindings': true };
+        return { 'controlsDescendantBindings': true, 'subscribable': subscribable };
     }
 };
