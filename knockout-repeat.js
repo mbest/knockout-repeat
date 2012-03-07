@@ -1,4 +1,12 @@
+(function() {
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
+
+function makeArrayItemAccessor(repeatArray, index, notificationObservable) {
+    return function() {
+        notificationObservable();   // for dependency tracking
+        return ko.utils.unwrapObservable(repeatArray[index]);
+    };
+}
 
 ko.bindingHandlers['repeat'] = {
     'flags': ko.bindingFlags.contentBind,
@@ -41,36 +49,28 @@ ko.bindingHandlers['repeat'] = {
                 }
             }
             // Remove nodes from end if array is shorter
-            if (allRepeatNodes.length > repeatCount) {
-                while (allRepeatNodes.length > repeatCount) {
-                    ko.removeNode(allRepeatNodes.pop());
-                }
+            while (allRepeatNodes.length > repeatCount) {
+                ko.removeNode(allRepeatNodes.pop());
             }
+
             // Notify existing nodes of change
             repeatUpdate["notifySubscribers"]();
 
             // Add nodes to end if array is longer (also initially populates nodes)
             if (allRepeatNodes.length < repeatCount) {
-                var endNode = allRepeatNodes.length ? allRepeatNodes[allRepeatNodes.length-1] : placeholder;
-                var insertBefore = endNode.nextSibling;
-                var startInsert = allRepeatNodes.length;
-                for (var i = startInsert; i < repeatCount; i++) {
+                for (var i = allRepeatNodes.length; i < repeatCount; i++) {
+                    // Clone node and add to document
                     var newNode = cleanNode.cloneNode(true);
-                    parent.insertBefore(newNode, insertBefore);
+                    parent.insertBefore(newNode, placeholder);
                     newNode.setAttribute('data-repeat-index', i);
                     allRepeatNodes[i] = newNode;
-                }
-                // Apply bindings to inserted nodes
-                for (i = startInsert; i < repeatCount; i++) {
+
+                    // Apply bindings to inserted node
                     var newContext = ko.utils.extend(new bindingContext.constructor(), bindingContext);
                     newContext[repeatIndex] = i;
-                    if (repeatArray) {
-                        newContext[repeatData] = (function(index) { return function() {
-                            repeatUpdate();   // for dependency tracking
-                            return ko.utils.unwrapObservable(repeatArray[index]);
-                        }; })(i);
-                    }
-                    ko.applyBindings(newContext, allRepeatNodes[i]);
+                    if (repeatArray)
+                        newContext[repeatData] = makeArrayItemAccessor(repeatArray, i, repeatUpdate);
+                    ko.applyBindings(newContext, newNode);
                 }
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
@@ -78,3 +78,4 @@ ko.bindingHandlers['repeat'] = {
         return { 'controlsDescendantBindings': true, 'subscribable': subscribable };
     }
 };
+})();

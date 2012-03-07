@@ -125,11 +125,11 @@ describe('Binding: Repeat', {
         ko.applyBindings(viewModel, testNode);
 
         // Verify we can access binding contexts during binding
-        value_of(testNode.childNodes[1]).should_contain_text("(Val: A1)(Val: A2)(Val: A3)");
-        value_of(testNode.childNodes[2]).should_contain_text("(Val: B1)(Val: B2)");
+        value_of(testNode.childNodes[0]).should_contain_text("(Val: A1)(Val: A2)(Val: A3)");
+        value_of(testNode.childNodes[1]).should_contain_text("(Val: B1)(Val: B2)");
 
         // Verify we can access them later
-        var firstInnerTextNode = testNode.childNodes[1].childNodes[1].childNodes[1];
+        var firstInnerTextNode = testNode.childNodes[0].childNodes[0].childNodes[1];
         value_of(firstInnerTextNode.nodeType).should_be(1); // The first span associated with A1
         value_of(ko.contextFor(firstInnerTextNode).$child()).should_be("A1");
         value_of(ko.contextFor(firstInnerTextNode).$root.rootVal).should_be("ROOTVAL");
