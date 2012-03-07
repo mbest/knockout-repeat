@@ -34,12 +34,11 @@ ko.bindingHandlers['repeat'] = {
         parent.replaceChild(placeholder, element);
 
         // set up persistent data
-        var allRepeatNodes = [],
-            repeatUpdate = ko.observable(),
-            repeatArray = undefined;
+        var lastRepeatCount = 0,
+            repeatUpdate = ko.observable();
 
         var subscribable = ko.dependentObservable(function() {
-            var repeatCount = ko.utils.unwrapObservable(valueAccessor());
+            var repeatCount = ko.utils.unwrapObservable(valueAccessor()), repeatArray;
             if (typeof repeatCount == 'object') {
                 if ('count' in repeatCount) {
                     repeatCount = ko.utils.unwrapObservable(repeatCount['count']);
@@ -49,29 +48,26 @@ ko.bindingHandlers['repeat'] = {
                 }
             }
             // Remove nodes from end if array is shorter
-            while (allRepeatNodes.length > repeatCount) {
-                ko.removeNode(allRepeatNodes.pop());
+            for (; lastRepeatCount > repeatCount; lastRepeatCount--) {
+                ko.removeNode(placeholder.previousSibling);
             }
 
             // Notify existing nodes of change
             repeatUpdate["notifySubscribers"]();
 
             // Add nodes to end if array is longer (also initially populates nodes)
-            if (allRepeatNodes.length < repeatCount) {
-                for (var i = allRepeatNodes.length; i < repeatCount; i++) {
-                    // Clone node and add to document
-                    var newNode = cleanNode.cloneNode(true);
-                    parent.insertBefore(newNode, placeholder);
-                    newNode.setAttribute('data-repeat-index', i);
-                    allRepeatNodes[i] = newNode;
+            for (; lastRepeatCount < repeatCount; lastRepeatCount++) {
+                // Clone node and add to document
+                var newNode = cleanNode.cloneNode(true);
+                parent.insertBefore(newNode, placeholder);
+                newNode.setAttribute('data-repeat-index', lastRepeatCount);
 
-                    // Apply bindings to inserted node
-                    var newContext = ko.utils.extend(new bindingContext.constructor(), bindingContext);
-                    newContext[repeatIndex] = i;
-                    if (repeatArray)
-                        newContext[repeatData] = makeArrayItemAccessor(repeatArray, i, repeatUpdate);
-                    ko.applyBindings(newContext, newNode);
-                }
+                // Apply bindings to inserted node
+                var newContext = ko.utils.extend(new bindingContext.constructor(), bindingContext);
+                newContext[repeatIndex] = lastRepeatCount;
+                if (repeatArray)
+                    newContext[repeatData] = makeArrayItemAccessor(repeatArray, lastRepeatCount, repeatUpdate);
+                ko.applyBindings(newContext, newNode);
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
 

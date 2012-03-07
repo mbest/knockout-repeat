@@ -136,12 +136,12 @@ describe('Binding: Repeat', {
     },
 
     'Should be able to use \'repeat\' in UL elements even when closing LI tags are omitted' : function() {
-        testNode.innerHTML =   "<ul><li>Header item<li data-bind='repeat: {foreach: someitems, bind: \"text: $item()\"}'></ul>";
+        testNode.innerHTML =   "<ul><li>Header item<li data-bind='repeat: {foreach: someitems, bind: \"text: $item()\"}'><li>Footer item</ul>";
         var viewModel = {
             someitems: [ 'Alpha', 'Beta' ]
         };
         ko.applyBindings(viewModel, testNode);
 
-        value_of(testNode).should_contain_text("Header itemAlphaBeta");
+        value_of(testNode).should_contain_text("Header itemAlphaBetaFooter item");
     }
 });
