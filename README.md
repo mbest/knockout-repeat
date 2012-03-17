@@ -55,8 +55,8 @@ This will display 01234.
 ```
 
 This will display a list of countries with numbering supplied by the repeat binding's $index. The selected 
-country having the 'selected' class.
+country will have the `selected` class.
 
-Michael Best
-https://github.com/mbest/
+Michael Best<br>
+https://github.com/mbest/<br>
 mbest@dasya.com
