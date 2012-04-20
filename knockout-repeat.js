@@ -1,12 +1,17 @@
+// REPEAT binding for Knockout http://knockoutjs.com/
+// (c) Michael Best
+// License: MIT (http://www.opensource.org/licenses/mit-license.php)
+
 (function() {
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
 
-function makeArrayItemAccessor(repeatArray, index, notificationObservable) {
-    return function() {
-        notificationObservable();   // for dependency tracking
-        return ko.utils.unwrapObservable(repeatArray[index]);
-    };
+function findPropertyName(obj, equals) {
+    for (var a in obj)
+        if (obj.hasOwnProperty(a) && obj[a] === equals)
+            return a;
 }
+
+var koProtoName = findPropertyName(ko.observable.fn, ko.observable);
 
 ko.bindingHandlers['repeat'] = {
     'flags': ko.bindingFlags.contentBind,
@@ -35,10 +40,27 @@ ko.bindingHandlers['repeat'] = {
 
         // set up persistent data
         var lastRepeatCount = 0,
-            repeatUpdate = ko.observable();
+            notificationObservable = ko.observable(),
+            repeatArray;
 
         var subscribable = ko.dependentObservable(function() {
-            var repeatCount = ko.utils.unwrapObservable(valueAccessor()), repeatArray;
+            var repeatCount = ko.utils.unwrapObservable(valueAccessor());
+
+            function makeArrayItemAccessor(index) {
+                var f = function() {
+                    var item = repeatArray[index];
+                    if (!arguments.length) {
+                        notificationObservable();   // for dependency tracking
+                        return ko.utils.unwrapObservable(item);
+                    } else if (ko.isObservable(item)) {
+                        return item(arguments[0]);
+                    }
+                };
+                // Pretend that our accessor function is an observable
+                f[koProtoName] = ko.observable;
+                return f;
+            }
+
             if (typeof repeatCount == 'object') {
                 if ('count' in repeatCount) {
                     repeatCount = ko.utils.unwrapObservable(repeatCount['count']);
@@ -53,7 +75,7 @@ ko.bindingHandlers['repeat'] = {
             }
 
             // Notify existing nodes of change
-            repeatUpdate["notifySubscribers"]();
+            notificationObservable["notifySubscribers"]();
 
             // Add nodes to end if array is longer (also initially populates nodes)
             for (; lastRepeatCount < repeatCount; lastRepeatCount++) {
@@ -66,7 +88,7 @@ ko.bindingHandlers['repeat'] = {
                 var newContext = ko.utils.extend(new bindingContext.constructor(), bindingContext);
                 newContext[repeatIndex] = lastRepeatCount;
                 if (repeatArray)
-                    newContext[repeatData] = makeArrayItemAccessor(repeatArray, lastRepeatCount, repeatUpdate);
+                    newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
                 ko.applyBindings(newContext, newNode);
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});

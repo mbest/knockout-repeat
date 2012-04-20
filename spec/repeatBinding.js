@@ -42,7 +42,7 @@ describe('Binding: Repeat', {
     },
 
     'Should be able to use \'with\' to create a child context': function() {
-        testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: \"with: $item()\"}'><span data-bind='text: childProp'></span></div>";
+        testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: \"with: $item\"}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
             { childProp: 'first child' },
             { childProp: 'second child' }
@@ -99,7 +99,7 @@ describe('Binding: Repeat', {
     },
 
     'Should update all nodes corresponding to a changed array item, even if they were generated via containerless templates': function() {
-        testNode.innerHTML = "<div data-bind='repeat: {foreach: someitems}'><!-- ko if:true --><span data-bind='text: $item()'></span><!-- /ko --></div>";
+        testNode.innerHTML = "<div data-bind='repeat: {foreach: someitems}'><!-- ko if:true --><span data-bind='text: $item'></span><!-- /ko --></div>";
         var someitems = [ ko.observable('A'), ko.observable('B') ];
         ko.applyBindings({ someitems: someitems }, testNode);
         value_of(testNode).should_contain_text('AB');
@@ -112,7 +112,7 @@ describe('Binding: Repeat', {
     'Should be able to nest \'repeat\' and access binding contexts both during and after binding': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: items}'>"
                                 + "<div data-bind='repeat: {foreach: $item().children, item: \"$child\"}'>"
-                                    + "(Val: <span data-bind='text: $child()'></span>)"
+                                    + "(Val: <span data-bind='text: $child'></span>)"
                                 + "</div>"
                            + "</div>";
         var viewModel = {
@@ -136,12 +136,57 @@ describe('Binding: Repeat', {
     },
 
     'Should be able to use \'repeat\' in UL elements even when closing LI tags are omitted' : function() {
-        testNode.innerHTML =   "<ul><li>Header item<li data-bind='repeat: {foreach: someitems, bind: \"text: $item()\"}'><li>Footer item</ul>";
+        testNode.innerHTML =   "<ul><li>Header item<li data-bind='repeat: {foreach: someitems, bind: \"text: $item\"}'><li>Footer item</ul>";
         var viewModel = {
             someitems: [ 'Alpha', 'Beta' ]
         };
         ko.applyBindings(viewModel, testNode);
 
         value_of(testNode).should_contain_text("Header itemAlphaBetaFooter item");
+    },
+
+    'Should properly render nested observable arrays': function() {
+        var innerArray1 = ko.observableArray(),
+            outerArray = ko.observableArray([innerArray1]),
+            vm = { outerArray: outerArray };
+            updateItems = [];
+        ko.bindingHandlers.test = {
+            'update': function(element, valueAccessor) {
+                var val = valueAccessor();
+                element.innerHTML = val;
+                updateItems.push(val);
+            }
+        }
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: outerArray}'><span data-bind='repeat: {foreach: $item}'><span data-bind='test: $item()'></span></span></span>";
+        ko.applyBindings(vm, testNode);
+
+        // initially nothing is output or bound
+        value_of(testNode).should_contain_text("");
+        value_of(updateItems.length).should_be(0);
+
+        // Add an item to the inner array
+        updateItems = [];
+        innerArray1.push('A');
+        value_of(testNode).should_contain_text("A");
+        value_of(updateItems).should_be(['A']);
+
+        // Add another item to the inner array
+        updateItems = [];
+        innerArray1.push('B');
+        value_of(testNode).should_contain_text("AB");
+        value_of(updateItems).should_be(['A','B']);
+
+        // Replace items in the inner array
+        updateItems = [];
+        innerArray1(['C', 'B', 'D', 'A']);
+        value_of(testNode).should_contain_text("CBDA");
+        value_of(updateItems).should_be(['C', 'B', 'D', 'A']);
+
+        // Insert a new array to the outer array
+        updateItems = [];
+        var innerArray2 = ko.observableArray(['X', 'Y']);
+        outerArray.push(innerArray2)
+        value_of(testNode).should_contain_text("CBDAXY");
+        value_of(updateItems).should_be(['C', 'B', 'D', 'A', 'X', 'Y']);
     }
 });
