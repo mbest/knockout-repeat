@@ -41,8 +41,37 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('first childsecond child');
     },
 
+    'Should be able to specify sub-binding using a function with index': function() {
+        testNode.innerHTML = "<span data-bind=\"repeat: {count: 5, bind: function($index) { return { text: $index }}}\"></span>";
+        ko.applyBindings(null, testNode);
+        value_of(testNode).should_contain_text('01234');
+    },
+
+    'Should be able to specify sub-binding using a function with item and index': function() {
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, bind: function($item, $index) {return { text: $index + $item().childProp }}}'></span>";
+        var someItems = [
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ];
+        ko.applyBindings({ someItems: someItems }, testNode);
+        value_of(testNode).should_contain_text('0first child1second child');
+    },
+
     'Should be able to use \'with\' to create a child context': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: \"with: $item\"}'><span data-bind='text: childProp'></span></div>";
+        var someItems = ko.observableArray([
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ]);
+        ko.applyBindings({ someItems: someItems }, testNode);
+        value_of(testNode).should_contain_text('first childsecond child');
+        // add an item
+        someItems.push({ childProp: 'last child' });
+        value_of(testNode).should_contain_text('first childsecond childlast child');
+    },
+
+    'Should be able to use \'with\' to create a child context using function syntax': function() {
+        testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: function($item) { return { with: $item }}}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
             { childProp: 'first child' },
             { childProp: 'second child' }

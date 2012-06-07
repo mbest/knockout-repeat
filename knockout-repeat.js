@@ -31,8 +31,10 @@ ko.bindingHandlers['repeat'] = {
 
         // Make a copy of the element node to be copied for each repetition
         var cleanNode = element.cloneNode(true);
-        if (repeatBind)
+        if (typeof repeatBind == "string") {
             cleanNode.setAttribute('data-bind', repeatBind);
+            repeatBind = null;
+        }
 
         // Original element is no longer needed: delete it and create a placeholder comment
         var parent = element.parentNode, placeholder = document.createComment('ko_repeatplaceholder');
@@ -59,6 +61,12 @@ ko.bindingHandlers['repeat'] = {
                 // Pretend that our accessor function is an observable
                 f[koProtoName] = ko.observable;
                 return f;
+            }
+
+            function makeBinding(item, index) {
+                return repeatArray
+                    ? function() { return repeatBind(item, index); }
+                    : function() { return repeatBind(index); }
             }
 
             if (typeof repeatCount == 'object') {
@@ -89,7 +97,10 @@ ko.bindingHandlers['repeat'] = {
                 newContext[repeatIndex] = lastRepeatCount;
                 if (repeatArray)
                     newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
-                ko.applyBindings(newContext, newNode);
+                if (repeatBind)
+                    var shouldBindDescendants = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount), newContext).shouldBindDescendants;
+                if (!repeatBind || shouldBindDescendants)
+                    ko.applyBindings(newContext, newNode);
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
 
