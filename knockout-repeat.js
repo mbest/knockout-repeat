@@ -63,10 +63,10 @@ ko.bindingHandlers['repeat'] = {
                 return f;
             }
 
-            function makeBinding(item, index) {
+            function makeBinding(item, index, context) {
                 return repeatArray
-                    ? function() { return repeatBind(item, index); }
-                    : function() { return repeatBind(index); }
+                    ? function() { return repeatBind.call(viewModel, item, index, context); }
+                    : function() { return repeatBind.call(viewModel, index, context); }
             }
 
             if (typeof repeatCount == 'object') {
@@ -98,7 +98,7 @@ ko.bindingHandlers['repeat'] = {
                 if (repeatArray)
                     newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
                 if (repeatBind)
-                    var shouldBindDescendants = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount), newContext).shouldBindDescendants;
+                    var shouldBindDescendants = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount, newContext), newContext).shouldBindDescendants;
                 if (!repeatBind || shouldBindDescendants)
                     ko.applyBindings(newContext, newNode);
             }

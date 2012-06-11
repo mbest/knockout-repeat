@@ -39,9 +39,11 @@ the following properties:
    can be passed directly to bindings that accept observables (most do) or the item value can be
    accessed using observable syntax: `$item()`.
 * `bind` the binding used for the repeated elements (optional); *index* and *item* will be available
-    in this binding. Binding can be either a string (see above) or a function (see below). If using
-    the function syntax with a array, the first parameter is *item* and the second is *index*; with
-    just a count, the only parameter is *index*.
+    in this binding. Binding can be either a string (see above) or a function (see below) that returns
+    an object. If using the function syntax with a array, the first parameter is *item* and the second
+    is *index*; with just a count, the only parameter is *index*. The last parameter to the function is
+    the context object, which is useful if you want to define your function externally (in your view
+    model) and want access to context properties such as `$parent`.
 
 Here are some more examples:
 

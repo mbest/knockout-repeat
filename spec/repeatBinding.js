@@ -57,6 +57,24 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('0first child1second child');
     },
 
+    'Should be able to specify sub-binding using a function on the view model and have access to the context': function() {
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, bind: itemBinding }'></span>";
+        var someItems = [
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ];
+        var vm = {
+            someItems: someItems,
+            itemBinding: function($item, $index, context) {
+                value_of(this).should_be(vm);
+                value_of(context.$data).should_be(vm);
+                return { text: $index + $item().childProp };
+            }
+        }
+        ko.applyBindings(vm, testNode);
+        value_of(testNode).should_contain_text('0first child1second child');
+    },
+
     'Should be able to use \'with\' to create a child context': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: \"with: $item\"}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
