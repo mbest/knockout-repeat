@@ -29,6 +29,13 @@ ko.bindingHandlers['repeat'] = {
         ko.cleanNode(element);
         element.removeAttribute('data-bind');
 
+        // extract and remove a data-repeat-bind attribute, if present
+        if (!repeatBind) {
+            repeatBind = element.getAttribute('data-repeat-bind');
+            if (repeatBind)
+                element.removeAttribute('data-repeat-bind');
+        }
+
         // Make a copy of the element node to be copied for each repetition
         var cleanNode = element.cloneNode(true);
         if (typeof repeatBind == "string") {
@@ -46,8 +53,6 @@ ko.bindingHandlers['repeat'] = {
             repeatArray;
 
         var subscribable = ko.dependentObservable(function() {
-            var repeatCount = ko.utils.unwrapObservable(valueAccessor());
-
             function makeArrayItemAccessor(index) {
                 var f = function() {
                     var item = repeatArray[index];
@@ -69,13 +74,17 @@ ko.bindingHandlers['repeat'] = {
                     : function() { return repeatBind.call(viewModel, index, context); }
             }
 
+            var repeatCount = ko.utils.unwrapObservable(valueAccessor());
             if (typeof repeatCount == 'object') {
                 if ('count' in repeatCount) {
                     repeatCount = ko.utils.unwrapObservable(repeatCount['count']);
                 } else if ('foreach' in repeatCount) {
                     repeatArray = ko.utils.unwrapObservable(repeatCount['foreach']);
-                    repeatCount = repeatArray && repeatArray['length'] || 0;
+                } else if ('length' in repeatCount) {
+                    repeatArray = repeatCount;
                 }
+                if (repeatArray)
+                    repeatCount = repeatArray['length'] || 0;
             }
             // Remove nodes from end if array is shorter
             for (; lastRepeatCount > repeatCount; lastRepeatCount--) {

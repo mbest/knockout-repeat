@@ -27,8 +27,8 @@ Here is the equivalent html using `repeat`:
 ```
 In my tests with about 400 rows, the `repeat` version was twice as fast.
 
-`repeat` can take either a single parameter (the number of repetitions [count]) or an object literal with
-the following properties:
+`repeat` can take either a single parameter (the number of repetitions [count] or an array to iterate [foreach])
+or an object literal with the following properties:
 
 * `count` the number of repetitions
 * `foreach` an array or observableArray over which to iterate
@@ -39,11 +39,12 @@ the following properties:
    can be passed directly to bindings that accept observables (most do) or the item value can be
    accessed using observable syntax: `$item()`.
 * `bind` the binding used for the repeated elements (optional); *index* and *item* will be available
-    in this binding. Binding can be either a string (see above) or a function (see below) that returns
-    an object. If using the function syntax with a array, the first parameter is *item* and the second
-    is *index*; with just a count, the only parameter is *index*. The last parameter to the function is
-    the context object, which is useful if you want to define your function externally (in your view
-    model) and want access to context properties such as `$parent`.
+   in this binding. Binding can be either a string (see above) or a function (see below) that returns
+   an object. If using the function syntax with a array, the first parameter is *item* and the second
+   is *index*; with just a count, the only parameter is *index*. The last parameter to the function is
+   the context object, which is useful if you want to define your function externally (in your view
+   model) and want access to context properties such as `$parent`. The repeated binding can also be
+   specified using its own attribute, `data-repeat-bind` (see below).
 
 Here are some more examples:
 
@@ -62,6 +63,12 @@ This will display 01234.
 
 This will display a list of countries with numbering supplied by the repeat binding's $index. The selected
 country will have the `selected` class.
+
+Example using the `data-repeat-bind` attribute:
+
+```html
+<span data-bind="repeat: 5" data-repeat-bind="text: $index">
+```
 
 License: MIT (http://www.opensource.org/licenses/mit-license.php)
 

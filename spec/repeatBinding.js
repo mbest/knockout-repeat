@@ -75,6 +75,16 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('0first child1second child');
     },
 
+    'Should be able to specify sub-binding using a data-repeat-bind attribute': function() {
+        testNode.innerHTML = "<span data-bind='repeat: someItems' data-repeat-bind='text: $index + $item().childProp'></span>";
+        var someItems = [
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ];
+        ko.applyBindings({ someItems: someItems }, testNode);
+        value_of(testNode).should_contain_text('0first child1second child');
+    },
+
     'Should be able to use \'with\' to create a child context': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: \"with: $item\"}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
