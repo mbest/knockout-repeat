@@ -1,6 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
+// Version 1.2.0
 
 (function() {
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
