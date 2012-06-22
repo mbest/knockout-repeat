@@ -1,6 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
+// Version 1.2.1
 
 (function() {
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
@@ -29,10 +30,19 @@ ko.bindingHandlers['repeat'] = {
         ko.cleanNode(element);
         element.removeAttribute('data-bind');
 
+        // extract and remove a data-repeat-bind attribute, if present
+        if (!repeatBind) {
+            repeatBind = element.getAttribute('data-repeat-bind');
+            if (repeatBind)
+                element.removeAttribute('data-repeat-bind');
+        }
+
         // Make a copy of the element node to be copied for each repetition
         var cleanNode = element.cloneNode(true);
-        if (repeatBind)
+        if (typeof repeatBind == "string") {
             cleanNode.setAttribute('data-bind', repeatBind);
+            repeatBind = null;
+        }
 
         // Original element is no longer needed: delete it and create a placeholder comment
         var parent = element.parentNode, placeholder = document.createComment('ko_repeatplaceholder');
@@ -44,8 +54,6 @@ ko.bindingHandlers['repeat'] = {
             repeatArray;
 
         var subscribable = ko.dependentObservable(function() {
-            var repeatCount = ko.utils.unwrapObservable(valueAccessor());
-
             function makeArrayItemAccessor(index) {
                 var f = function() {
                     var item = repeatArray[index];
@@ -61,13 +69,23 @@ ko.bindingHandlers['repeat'] = {
                 return f;
             }
 
+            function makeBinding(item, index, context) {
+                return repeatArray
+                    ? function() { return repeatBind.call(viewModel, item, index, context); }
+                    : function() { return repeatBind.call(viewModel, index, context); }
+            }
+
+            var repeatCount = ko.utils.unwrapObservable(valueAccessor());
             if (typeof repeatCount == 'object') {
                 if ('count' in repeatCount) {
                     repeatCount = ko.utils.unwrapObservable(repeatCount['count']);
                 } else if ('foreach' in repeatCount) {
                     repeatArray = ko.utils.unwrapObservable(repeatCount['foreach']);
-                    repeatCount = repeatArray && repeatArray['length'] || 0;
+                } else if ('length' in repeatCount) {
+                    repeatArray = repeatCount;
                 }
+                if (repeatArray)
+                    repeatCount = repeatArray['length'] || 0;
             }
             // Remove nodes from end if array is shorter
             for (; lastRepeatCount > repeatCount; lastRepeatCount--) {
@@ -95,7 +113,10 @@ ko.bindingHandlers['repeat'] = {
                         newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
                 }
                 newContext[repeatIndex] = lastRepeatCount;
-                ko.applyBindings(newContext, newNode);
+                if (repeatBind)
+                    var shouldBindDescendants = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount, newContext), newContext).shouldBindDescendants;
+                if (!repeatBind || shouldBindDescendants)
+                    ko.applyBindings(newContext, newNode);
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
 
