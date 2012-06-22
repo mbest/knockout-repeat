@@ -54,6 +54,19 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('first childsecond childlast child');
     },
 
+    'Should be able to set item to \'$data\' to create a child context (if supported)': function() {
+        testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, item: \"$data\"}'><span data-bind='text: childProp'></span></div>";
+        var someItems = ko.observableArray([
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ]);
+        ko.applyBindings({ someItems: someItems }, testNode);
+        value_of(testNode).should_contain_text('first childsecond child');
+        // add an item
+        someItems.push({ childProp: 'last child' });
+        value_of(testNode).should_contain_text('first childsecond childlast child');
+    },
+
     'Should be able to use $index to reference each array item being bound': function() {
         testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, bind: \"text: someItems()[$index]\"}'></span>";
         var someItems = ko.observableArray(['alpha', 'beta']);

@@ -85,10 +85,16 @@ ko.bindingHandlers['repeat'] = {
                 newNode.setAttribute('data-repeat-index', lastRepeatCount);
 
                 // Apply bindings to inserted node
-                var newContext = ko.utils.extend(new bindingContext.constructor(), bindingContext);
+                if (repeatArray && repeatData == '$data') {
+                    var newContext = bindingContext.createChildContext(makeArrayItemAccessor(lastRepeatCount));
+                } else {
+                    var newContext = bindingContext.extend
+                        ? bindingContext.extend()
+                        : ko.utils.extend(new bindingContext.constructor(), bindingContext);
+                    if (repeatArray)
+                        newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
+                }
                 newContext[repeatIndex] = lastRepeatCount;
-                if (repeatArray)
-                    newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
                 ko.applyBindings(newContext, newNode);
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
