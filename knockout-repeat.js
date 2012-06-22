@@ -113,8 +113,10 @@ ko.bindingHandlers['repeat'] = {
                         newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
                 }
                 newContext[repeatIndex] = lastRepeatCount;
-                if (repeatBind)
-                    var shouldBindDescendants = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount, newContext), newContext).shouldBindDescendants;
+                if (repeatBind) {
+                    var result = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount, newContext), newContext, true),
+                        shouldBindDescendants = result && result.shouldBindDescendants;
+                }
                 if (!repeatBind || shouldBindDescendants)
                     ko.applyBindings(newContext, newNode);
             }
