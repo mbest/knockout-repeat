@@ -5,6 +5,7 @@ function prepareTestNode() {
     testNode = document.createElement("div");
     testNode.id = "testNode";
     document.body.appendChild(testNode);
+    ko.bindingHandlers.repeat.itemName = undefined;
 }
 
 
@@ -112,7 +113,8 @@ describe('Binding: Repeat', {
     },
 
     'Should be able to set item to \'$data\' to create a child context (if supported)': function() {
-        testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, item: \"$data\"}'><span data-bind='text: childProp'></span></div>";
+        ko.bindingHandlers.repeat.itemName = '$data';
+        testNode.innerHTML = "<div data-bind='repeat: someItems'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
             { childProp: 'first child' },
             { childProp: 'second child' }
