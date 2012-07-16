@@ -3,7 +3,20 @@
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
 // Version 1.2.1
 
-(function() {
+(function(factory) {
+    // Support three module loading scenarios
+    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
+        // [1] CommonJS/Node.js
+        var target = module['exports'] || exports; // module.exports is for Node.js
+        factory(target);
+    } else if (typeof define === 'function' && define['amd']) {
+        // [2] AMD anonymous module
+        define(['knockout'], factory);
+    } else {
+        // [3] No module loader (plain <script> tag) - put directly in global namespace
+        factory(window['ko']);
+    }
+})(function(ko) {
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
 
 function findPropertyName(obj, equals) {
@@ -21,11 +34,15 @@ ko.bindingHandlers['repeat'] = {
         var repeatIndex = '$index',
             repeatData = ko.bindingHandlers['repeat']['itemName'] || '$item',
             repeatBind,
-            repeatParam = ko.utils.unwrapObservable(valueAccessor());
+            repeatParam = ko.utils.unwrapObservable(valueAccessor()),
+            repeatInit,
+            repeatUpdate;
         if (typeof repeatParam == 'object') {
             if ('index' in repeatParam) repeatIndex = repeatParam['index'];
             if ('item' in repeatParam) repeatData = repeatParam['item'];
             if ('bind' in repeatParam) repeatBind = repeatParam['bind'];
+            if ('init' in repeatParam) repeatInit = repeatParam['init'];
+            if ('update' in repeatParam) repeatUpdate = repeatParam['update'];
         }
 
         // First clean the element node and remove node's binding
@@ -55,6 +72,9 @@ ko.bindingHandlers['repeat'] = {
             notificationObservable = ko.observable(),
             repeatArray;
 
+        if (repeatInit) {
+            repeatInit(parent);
+        }
         var subscribable = ko.dependentObservable(function() {
             function makeArrayItemAccessor(index) {
                 var f = function() {
@@ -121,6 +141,9 @@ ko.bindingHandlers['repeat'] = {
                 }
                 if (!repeatBind || shouldBindDescendants)
                     ko.applyBindings(newContext, newNode);
+            }
+            if (repeatUpdate) {
+                repeatUpdate(parent);
             }
         }, null, {'disposeWhenNodeIsRemoved': placeholder});
 
