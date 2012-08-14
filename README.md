@@ -1,6 +1,9 @@
 **REPEAT** binding for [Knockout](http://knockoutjs.com/)
 
-`repeat` can replace `foreach` in many instances and is faster and simpler for some tasks.
+`repeat` can replace `foreach` in many instances and is faster and simpler for some tasks. In contrast to `foreach`:
+* `repeat` does not create a binding context. Therefore, the variables for the binding context (`$data`, `$parent`, and `$parents`) are unaffected. Instead, you can access the current item using `$item()` and `$index`.
+* `repeat` operates on the outer HTML instead of the inner HTML.
+* `repeat` can either loop a number of times (`count`) or iterate over an array or observableArray (`foreach`).
 
 For example, say you are creating a data table. Here's the html using `foreach`:
 
@@ -68,6 +71,28 @@ Example using the `data-repeat-bind` attribute:
 
 ```html
 <span data-bind="repeat: 5" data-repeat-bind="text: $index">
+```
+
+You may use `with` to create a binding context in a `repeat` to get the equivalent functionality of a `foreach`. These three examples are equivalent:
+
+```html
+<div data-bind="repeat: availableCountries"
+     data-repeat-bind="css: { sel: $item() == selectedCountry() }">
+    <span data-bind="text: $item, click: function() { select($item()); }"></span>
+</div>
+```
+```html
+<div data-bind="repeat: availableCountries"
+     data-repeat-bind="css: { sel: $item() == selectedCountry() }, with: $item">
+    <span data-bind="text: $data, click: select"></span>
+</div>
+```
+```html
+<!-- ko foreach: availableCountries -->
+<div data-bind="css: { sel: $data == $parent.selectedCountry() }">
+    <span data-bind="text: $data, click: select"></span>
+</div>
+<!-- /ko -->
 ```
 
 License: MIT (http://www.opensource.org/licenses/mit-license.php)
