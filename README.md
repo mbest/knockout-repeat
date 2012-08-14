@@ -38,7 +38,7 @@ or an object literal with the following properties:
    (either *count* or *foreach* is required)
 * `index` the name of the property that will store the index (default is `$index`)
 * `item` the name of the property used to access the indexed item in the array (default is `$item`)
-   (*item* is only used when an array is supplied with *foreach*) `$item` is a psuedo-observable and
+   (*item* is only used when an array is supplied with *foreach*) `$item` is a pseudo-observable and
    can be passed directly to bindings that accept observables (most do) or the item value can be
    accessed using observable syntax: `$item()`.
 * `bind` the binding used for the repeated elements (optional); *index* and *item* will be available
@@ -78,19 +78,19 @@ You may use `with` to create a binding context in a `repeat` to get the equivale
 ```html
 <div data-bind="repeat: availableCountries"
      data-repeat-bind="css: { sel: $item() == selectedCountry() }">
-    <span data-bind="text: $item, click: function() { select($item()); }"></span>
+    <span data-bind="text: $item, click: function() { selectedCountry($item()); }"></span>
 </div>
 ```
 ```html
 <div data-bind="repeat: availableCountries"
      data-repeat-bind="css: { sel: $item() == selectedCountry() }, with: $item">
-    <span data-bind="text: $data, click: select"></span>
+    <span data-bind="text: $data, click: $parent.selectedCountry"></span>
 </div>
 ```
 ```html
 <!-- ko foreach: availableCountries -->
 <div data-bind="css: { sel: $data == $parent.selectedCountry() }">
-    <span data-bind="text: $data, click: select"></span>
+    <span data-bind="text: $data, click: $parent.selectedCountry"></span>
 </div>
 <!-- /ko -->
 ```
