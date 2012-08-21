@@ -1,11 +1,16 @@
-**REPEAT** binding for [Knockout](http://knockoutjs.com/)
+### **REPEAT** binding for [Knockout](http://knockoutjs.com/)
 
-`repeat` can replace `foreach` in many instances and is faster and simpler for some tasks. In contrast to `foreach`:
-* `repeat` does not create a binding context. Therefore, the variables for the binding context (`$data`, `$parent`, and `$parents`) are unaffected. Instead, you can access the current item using `$item()` and `$index`.
+The `repeat` binding can replace `foreach` in many instances and is faster and simpler for some tasks.
+In contrast to `foreach`:
+
+* `repeat` does not create a new binding context. Therefore, the variables for the binding context
+    (`$data`, `$parent`, and `$parents`) are unaffected. Instead, you can access the current item using
+    `$item()` and `$index`.
 * `repeat` operates on the outer HTML instead of the inner HTML.
 * `repeat` can either loop a number of times (`count`) or iterate over an array or observableArray (`foreach`).
+* `repeat` avoids excessive re-rendering of DOM nodes by updating only the child bindings when the view model changes.
 
-For example, say you are creating a data table. Here's the html using `foreach`:
+Here’s a comparison between `foreach` and `repeat` for a data table:
 
 ```html
 <table>
@@ -15,20 +20,18 @@ For example, say you are creating a data table. Here's the html using `foreach`:
         </tr>
     </tbody>
 </table>
-```
-Here is the equivalent html using `repeat`:
 
-```html
 <table>
     <tbody>
         <tr data-bind="repeat: {foreach: data, item: '$row'}">
-            <td data-bind="repeat: {foreach: columns, item: '$col',
-                bind: 'text: $row()[$col().propertyName]'}"></td>
+            <td data-bind="repeat: {foreach: columns, item: '$col'}"
+                data-repeat-bind="text: $row()[$col().propertyName]"></td>
         </tr>
     </tbody>
 </table>
 ```
-In my tests with about 400 rows, the `repeat` version was twice as fast.
+
+#### Parameters
 
 `repeat` can take either a single parameter (the number of repetitions [count] or an array to iterate [foreach])
 or an object literal with the following properties:
@@ -42,20 +45,23 @@ or an object literal with the following properties:
    can be passed directly to bindings that accept observables (most do) or the item value can be
    accessed using observable syntax: `$item()`.
 * `bind` the binding used for the repeated elements (optional); *index* and *item* will be available
-   in this binding. Binding can be either a string (see above) or a function (see below) that returns
+   in this binding. Binding can be either a string or a function (see below) that returns
    an object. If using the function syntax with a array, the first parameter is *item* and the second
    is *index*; with just a count, the only parameter is *index*. The last parameter to the function is
    the context object, which is useful if you want to define your function externally (in your view
    model) and want access to context properties such as `$parent`. The repeated binding can also be
-   specified using its own attribute, `data-repeat-bind` (see below).
+   specified using its own attribute, `data-repeat-bind` (see example above).
 
-Here are some more examples:
+#### More Examples
+
+The following will display 01234. This example uses a `bind` function with `index`.
 
 ```html
 <span data-bind="repeat: {count: 5, bind: function($index) { return { text: $index } } }">
 ```
 
-This will display 01234.
+The following will display a list of countries with numbering supplied by the repeat binding’s $index. The selected
+country will have the `selected` class. This example uses a `bind` function with `item`.
 
 ```html
 <div data-bind="repeat: {foreach: availableCountries, item: '$country',
@@ -64,38 +70,15 @@ This will display 01234.
 </div>
 ```
 
-This will display a list of countries with numbering supplied by the repeat binding's $index. The selected
-country will have the `selected` class.
-
-Example using the `data-repeat-bind` attribute:
+This example uses a `bind` string:
 
 ```html
-<span data-bind="repeat: 5" data-repeat-bind="text: $index">
+<span data-bind="repeat: { count: 5, bind: 'text: $index' }">
 ```
 
-You may use `with` to create a binding context in a `repeat` to get the equivalent functionality of a `foreach`. These three examples are equivalent:
+#### License and Contact
 
-```html
-<div data-bind="repeat: availableCountries"
-     data-repeat-bind="css: { sel: $item() == selectedCountry() }">
-    <span data-bind="text: $item, click: function() { selectedCountry($item()); }"></span>
-</div>
-```
-```html
-<div data-bind="repeat: availableCountries"
-     data-repeat-bind="css: { sel: $item() == selectedCountry() }, with: $item">
-    <span data-bind="text: $data, click: $parent.selectedCountry"></span>
-</div>
-```
-```html
-<!-- ko foreach: availableCountries -->
-<div data-bind="css: { sel: $data == $parent.selectedCountry() }">
-    <span data-bind="text: $data, click: $parent.selectedCountry"></span>
-</div>
-<!-- /ko -->
-```
-
-License: MIT (http://www.opensource.org/licenses/mit-license.php)
+**License:** MIT (http://www.opensource.org/licenses/mit-license.php)
 
 Michael Best<br>
 https://github.com/mbest<br>
