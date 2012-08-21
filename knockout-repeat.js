@@ -1,22 +1,18 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.2.1
+// Version 1.3.0
 
 (function(factory) {
-    // Support three module loading scenarios
-    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
-        // [1] CommonJS/Node.js
-        var target = module['exports'] || exports; // module.exports is for Node.js
-        factory(target);
-    } else if (typeof define === 'function' && define['amd']) {
-        // [2] AMD anonymous module
+    if (typeof define === 'function' && define['amd']) {
+        // [1] AMD anonymous module
         define(['knockout'], factory);
     } else {
-        // [3] No module loader (plain <script> tag) - put directly in global namespace
+        // [2] No module loader (plain <script> tag) - put directly in global namespace
         factory(window['ko']);
     }
 })(function(ko) {
+
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
 
 function findPropertyName(obj, equals) {
@@ -33,10 +29,9 @@ ko.bindingHandlers['repeat'] = {
         // initialize optional parameters
         var repeatIndex = '$index',
             repeatData = ko.bindingHandlers['repeat']['itemName'] || '$item',
-            repeatBind,
-            repeatParam = ko.utils.unwrapObservable(valueAccessor()),
-            repeatInit,
-            repeatUpdate;
+            repeatBind, repeatInit, repeatUpdate,
+            repeatParam = ko.utils.unwrapObservable(valueAccessor());
+
         if (typeof repeatParam == 'object') {
             if ('index' in repeatParam) repeatIndex = repeatParam['index'];
             if ('item' in repeatParam) repeatData = repeatParam['item'];
@@ -52,8 +47,9 @@ ko.bindingHandlers['repeat'] = {
         // extract and remove a data-repeat-bind attribute, if present
         if (!repeatBind) {
             repeatBind = element.getAttribute('data-repeat-bind');
-            if (repeatBind)
+            if (repeatBind) {
                 element.removeAttribute('data-repeat-bind');
+            }
         }
 
         // Make a copy of the element node to be copied for each repetition
@@ -75,6 +71,7 @@ ko.bindingHandlers['repeat'] = {
         if (repeatInit) {
             repeatInit(parent);
         }
+
         var subscribable = ko.dependentObservable(function() {
             function makeArrayItemAccessor(index) {
                 var f = function() {
@@ -139,8 +136,9 @@ ko.bindingHandlers['repeat'] = {
                     var result = ko.applyBindingsToNode(newNode, makeBinding(newContext[repeatData], lastRepeatCount, newContext), newContext, true),
                         shouldBindDescendants = result && result.shouldBindDescendants;
                 }
-                if (!repeatBind || shouldBindDescendants)
+                if (!repeatBind || (result && shouldBindDescendants !== false)) {
                     ko.applyBindings(newContext, newNode);
+                }
             }
             if (repeatUpdate) {
                 repeatUpdate(parent);
@@ -150,4 +148,4 @@ ko.bindingHandlers['repeat'] = {
         return { 'controlsDescendantBindings': true, 'subscribable': subscribable };
     }
 };
-})();
+});

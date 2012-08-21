@@ -99,6 +99,10 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('first childsecond childlast child');
     },
 
+    /* This currently doesn't work with the base Knockout because applyBindingsToNode returns an object
+       with a minified property. See https://github.com/mbest/knockout-repeat/issues/6
+       It does work with my smart-binding fork because it allows applyBindingsToNode to handle the
+       child binding directly. */
     'Should be able to use \'with\' to create a child context using function syntax': function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: function($item) { return { with: $item }}}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
