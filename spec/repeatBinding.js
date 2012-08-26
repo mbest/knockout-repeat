@@ -175,7 +175,7 @@ describe('Binding: Repeat', {
     },
 
     'Should update all nodes corresponding to a changed array item, even if they were generated via containerless templates': function() {
-        testNode.innerHTML = "<div data-bind='repeat: {foreach: someitems}'><!-- ko if:true --><span data-bind='text: $item'></span><!-- /ko --></div>";
+        testNode.innerHTML = "<div data-bind='repeat: someitems'><!-- ko if:true --><span data-bind='text: $item'></span><!-- /ko --></div>";
         var someitems = [ ko.observable('A'), ko.observable('B') ];
         ko.applyBindings({ someitems: someitems }, testNode);
         value_of(testNode).should_contain_text('AB');
@@ -186,7 +186,7 @@ describe('Binding: Repeat', {
     },
 
     'Should be able to nest \'repeat\' and access binding contexts both during and after binding': function() {
-        testNode.innerHTML = "<div data-bind='repeat: {foreach: items}'>"
+        testNode.innerHTML = "<div data-bind='repeat: items'>"
                                 + "<div data-bind='repeat: {foreach: $item().children, item: \"$child\"}'>"
                                     + "(Val: <span data-bind='text: $child'></span>)"
                                 + "</div>"
@@ -233,7 +233,7 @@ describe('Binding: Repeat', {
                 updateItems.push(val);
             }
         }
-        testNode.innerHTML = "<span data-bind='repeat: {foreach: outerArray}'><span data-bind='repeat: {foreach: $item}'><span data-bind='test: $item()'></span></span></span>";
+        testNode.innerHTML = "<span data-bind='repeat: outerArray'><span data-bind='repeat: $item'><span data-bind='test: $item()'></span></span></span>";
         ko.applyBindings(vm, testNode);
 
         // initially nothing is output or bound
@@ -264,5 +264,50 @@ describe('Binding: Repeat', {
         outerArray.push(innerArray2)
         value_of(testNode).should_contain_text("CBDAXY");
         value_of(updateItems).should_be(['C', 'B', 'D', 'A', 'X', 'Y']);
+    },
+
+    'Should limit the number of displayed items if \'limit\' option is provided': function() {
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, bind: \"text: $item()\", limit: limit}'></span>";
+        var someItems = ['A','B','C','D'], limit = ko.observable(0);
+        ko.applyBindings({ someItems: someItems, limit: limit }, testNode);
+        // 0 limit means no limit
+        value_of(testNode).should_contain_text('ABCD');
+        // limit larger than array has no effect
+        limit(10);
+        value_of(testNode).should_contain_text('ABCD');
+        // limit smaller than array size cuts off output
+        limit(2);
+        value_of(testNode).should_contain_text('AB');
+    },
+
+    'Should set the number of displayed items if \'count\' option is provided': function() {
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, count: fixedCount}' data-repeat-bind='text: $item() || \"X\"'></span>";
+        var someItems = ['A','B','C','D'], fixedCount = ko.observable(0);
+        ko.applyBindings({ someItems: someItems, fixedCount: fixedCount }, testNode);
+        // 0 count means use array length
+        value_of(testNode).should_contain_text('ABCD');
+        // count larger than array length outputs default items
+        fixedCount(10);
+        value_of(testNode).should_contain_text('ABCDXXXXXX');
+        // count smaller than array length cuts off output
+        fixedCount(2);
+        value_of(testNode).should_contain_text('AB');
+    },
+
+    'Should skip items if \'step\' option is provided': function() {
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, step: 2}' data-repeat-bind='text: $item()'></span>";
+        var someItems = ['A','B','C','D'];
+        ko.applyBindings({ someItems: someItems }, testNode);
+        value_of(testNode).should_contain_text('AC');
+    },
+
+    'Should output items in reversed order if \'reverse: true\' option is provided': function() {
+        testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, reverse: true}' data-repeat-bind='text: $index + $item()'></span>";
+        var someItems = ko.observableArray(['A','B','C','D']);
+        ko.applyBindings({ someItems: someItems }, testNode);
+        value_of(testNode).should_contain_text('3D2C1B0A');
+        // appended items are added to the beginning
+        someItems.push('E');
+        value_of(testNode).should_contain_text('4E3D2C1B0A');
     }
 });
