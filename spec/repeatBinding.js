@@ -185,6 +185,25 @@ describe('Binding: Repeat', {
         value_of(testNode).should_contain_text('A2B');
     },
 
+    'Should be able to update observable and non-observable items using a two-way binding': function() {
+        testNode.innerHTML = "<div data-bind='repeat: someitems'><input data-bind='value: $item' /></div>";
+        var someitems = [ ko.observable('A'), 'B' ];
+        ko.applyBindings({ someitems: someitems }, testNode);
+
+        value_of(testNode.childNodes[0].childNodes[0].value).should_be('A');
+        value_of(testNode.childNodes[1].childNodes[0].value).should_be('B');
+
+        // Now update the value of the observable item through the input
+        testNode.childNodes[0].childNodes[0].value = 'X';
+        ko.utils.triggerEvent(testNode.childNodes[0].childNodes[0], "change");
+        value_of(someitems[0]()).should_be('X');
+
+        // and now the non-observable item
+        testNode.childNodes[1].childNodes[0].value = 'Y';
+        ko.utils.triggerEvent(testNode.childNodes[1].childNodes[0], "change");
+        value_of(someitems[1]).should_be('Y');
+    },
+
     'Should be able to nest \'repeat\' and access binding contexts both during and after binding': function() {
         testNode.innerHTML = "<div data-bind='repeat: items'>"
                                 + "<div data-bind='repeat: {foreach: $item().children, item: \"$child\"}'>"

@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.4.1
+// Version 1.4.2
 
 (function(factory) {
     if (typeof define === 'function' && define['amd']) {
@@ -78,13 +78,15 @@ ko.bindingHandlers['repeat'] = {
 
         var subscribable = ko.dependentObservable(function() {
             function makeArrayItemAccessor(index) {
-                var f = function() {
+                var f = function(newValue) {
                     var item = repeatArray[index];
                     if (!arguments.length) {
                         notificationObservable();   // for dependency tracking
                         return ko.utils.unwrapObservable(item);
                     } else if (ko.isObservable(item)) {
-                        return item(arguments[0]);
+                        return item(newValue);
+                    } else {
+                        repeatArray[index] = newValue;
                     }
                 };
                 // Pretend that our accessor function is an observable
