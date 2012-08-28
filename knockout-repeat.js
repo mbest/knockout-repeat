@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.4.0
+// Version 1.4.1
 
 (function(factory) {
     if (typeof define === 'function' && define['amd']) {
@@ -28,22 +28,21 @@ ko.bindingHandlers['repeat'] = {
     'init': function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 
         // Read and set fixed options--these options cannot be changed
-        var repeatParam = ko.utils.unwrapObservable(valueAccessor()),
-            repeatIndex = '$index',
-            repeatStep = 1,
-            repeatReversed = false,
-            repeatData = ko.bindingHandlers['repeat']['itemName'] || '$item';
+        var repeatParam = ko.utils.unwrapObservable(valueAccessor());
         if (repeatParam && typeof repeatParam == 'object' && !('length' in repeatParam)) {
-            // These options have default values set above
-            if ('index' in repeatParam) repeatIndex = repeatParam['index'];
-            if ('item' in repeatParam) repeatData = repeatParam['item'];
-            if ('step' in repeatParam) repeatStep = repeatParam['step'];
-            if ('reverse' in repeatParam) repeatReversed = repeatParam['reverse'] ? true : false;
-            // These options have no default value (default to undefined)
-            var repeatBind = repeatParam['bind'],
+            var repeatIndex = repeatParam['index'],
+                repeatData = repeatParam['item'],
+                repeatStep = repeatParam['step'],
+                repeatReversed = repeatParam['reverse'],
+                repeatBind = repeatParam['bind'],
                 repeatInit = repeatParam['init'],
                 repeatUpdate = repeatParam['update'];
         }
+        // Set default values for options that need it
+        repeatIndex = repeatIndex || '$index';
+        repeatData = repeatData || ko.bindingHandlers['repeat']['itemName'] || '$item';
+        repeatStep = repeatStep || 1;
+        repeatReversed = repeatReversed || false;
 
         // First clean the element node and remove node's binding
         ko.cleanNode(element);

@@ -23,58 +23,65 @@ Here’s a comparison between `foreach` and `repeat` for a data table:
 
 <table>
     <tbody>
-        <tr data-bind="repeat: {foreach: data, item: '$row'}">
-            <td data-bind="repeat: {foreach: columns, item: '$col'}"
+        <tr data-bind="repeat: { foreach: data, item: '$row' }">
+            <td data-bind="repeat: { foreach: columns, item: '$col' }"
                 data-repeat-bind="text: $row()[$col().propertyName]"></td>
         </tr>
     </tbody>
 </table>
 ```
 
-#### Parameters
+#### Main Parameters
 
-`repeat` can take either a single parameter (the number of repetitions [count] or an array to iterate [foreach])
-or an object literal with the following properties:
+The `repeat` binding accepts a single parameter of the number of repetitions or an array to iterate. It also accepts an object literal with these parameters provided through the `count` or `foreach` property. If the parameter is an observable, the `repeat` binding will add or remove elements whenever you update it. Here are the main parameters:
 
-* `count` the number of repetitions
-* `foreach` an array or observableArray over which to iterate
-   (either *count* or *foreach* is required)
-* `index` the name of the property that will store the index (default is `$index`)
-* `item` the name of the property used to access the indexed item in the array (default is `$item`)
-   (*item* is only used when an array is supplied with *foreach*) `$item` is a pseudo-observable and
-   can be passed directly to bindings that accept observables (most do) or the item value can be
-   accessed using observable syntax: `$item()`.
-* `bind` the binding used for the repeated elements (optional); *index* and *item* will be available
-   in this binding. Binding can be either a string or a function (see below) that returns
-   an object. If using the function syntax with a array, the first parameter is *item* and the second
-   is *index*; with just a count, the only parameter is *index*. The last parameter to the function is
-   the context object, which is useful if you want to define your function externally (in your view
-   model) and want access to context properties such as `$parent`. The repeated binding can also be
-   specified using its own attribute, `data-repeat-bind` (see example above).
+* `count` — the number of repetitions
+* `foreach` — an array (or observableArray) over which to iterate. If both the `foreach` and (non-zero) `count` parameters are given, the `count` value takes precedence even if it’s larger than the array length.
+* `limit` — an upper limit on the number of repetitions, if non-zero (optional)
 
-#### More Examples
+The following optional parameters do not support updates (and can’t be observable):
 
-The following will display 01234. This example uses a `bind` function with `index`.
+* `reverse` — if `true`, the elements will be repeated in reverse order, with the lowest value at the bottom and items added to the top (default is `false`)
+* `step` — the increment value (default is `1`)
+* `index` — the name of the index context property (default is `$index`; see section below)
+* `item` — the name of the context property used to access the item in the array (default is `$item`; see section below)
+* `bind` — the binding used for the repeated elements (see section below)
 
-```html
-<span data-bind="repeat: {count: 5, bind: function($index) { return { text: $index } } }">
-```
+#### Context Properties
 
-The following will display a list of countries with numbering supplied by the repeat binding’s $index. The selected
-country will have the `selected` class. This example uses a `bind` function with `item`.
+The `repeat` binding makes the following context properties available to bindings in the repeated nodes.
 
-```html
-<div data-bind="repeat: {foreach: availableCountries, item: '$country',
-    bind: function($country) { return { css: { sel: $country() == selectedCountry() } } } }">
-    <span data-bind="text: $index+1"></span>. <span data-bind="text: $country"></span>
-</div>
-```
+* `$index` — the zero-based index of the current item. The name of this property can be changed using the `index` option.
+* `$item` — the array item matching the current index. This property in available only when an array is supplied to the `repeat` binding. It is a pseudo-observable, which can be passed directly to bindings that accept observables (most do), including two-way bindings; or the item value can be accessed using observable syntax: `$item()`. The name of this property can be changed using the `item` option.
 
-This example uses a `bind` string:
+#### Repeated Element Binding
 
-```html
-<span data-bind="repeat: { count: 5, bind: 'text: $index' }">
-```
+The `repeat` binding allows you to specify the binding for the repeated elements in a number of ways. Note that you cannot do this in the normal way you set additional bindings for an element—for example, `<span data-bind="repeat: 5, text: $index">` will not set the text of the repeated elements and will probably generate an error.
+
+1. The simplest and cleanest way is to use a `data-repeat-bind` attribute, which becomes the `data-bind` attribute of the repeated elements.
+
+    ```html
+    <span data-bind="repeat: 5" data-repeat-bind="text: $index">
+    ```
+
+2. Similarly, you can specify a binding string using the `bind` parameter to `repeat`.
+
+    ```html
+    <span data-bind="repeat: { count: 5, bind: 'text: $index' }">
+    ```
+
+3. If you are using a custom binding provider that doesn’t support the standard binding method of using a `data-bind` attribute, you can specify the binding for repeated elements using a function provided through the `bind` parameter to `repeat`. If using this option with `foreach`, the first parameter to the function is the *item* and the second is the *index*. If used with just `count`, the first parameter is the *index*. In both cases, the last parameter to the function is the binding context object, which is useful if you want to access additional context properties such as `$parent`.
+
+    ```html
+    <span data-bind="repeat: { count: 5, bind: function($index) { return { text: $index } } }">
+    ```
+
+    ```html
+    <div data-bind="repeat: { foreach: availableCountries, item: '$country',
+        bind: function($country) { return { css: { sel: $country() == selectedCountry() } } } }">
+        <span data-bind="text: $index+1"></span>. <span data-bind="text: $country"></span>
+    </div>
+    ```
 
 #### License and Contact
 
