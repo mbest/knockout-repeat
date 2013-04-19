@@ -328,5 +328,11 @@ describe('Binding: Repeat', {
         // appended items are added to the beginning
         someItems.push('E');
         value_of(testNode).should_contain_text('4E3D2C1B0A');
+    },
+
+    'Should be able to specify numeric count using \'foreach\' option': function() {
+        testNode.innerHTML = "<span data-bind=\"repeat: {foreach: 5, bind: 'text: $index'}\"></span>";
+        ko.applyBindings(null, testNode);
+        value_of(testNode).should_contain_text('01234');
     }
 });

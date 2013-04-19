@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.4.2
+// Version 1.5.0
 
 (function(factory) {
     if (typeof define === 'function' && define['amd']) {
@@ -109,7 +109,12 @@ ko.bindingHandlers['repeat'] = {
                 } else {
                     if ('foreach' in repeatParam) {
                         repeatArray = ko.utils.unwrapObservable(repeatParam['foreach']);
-                        repeatCount = repeatArray && repeatArray['length'] || 0;
+                        if (repeatArray && typeof repeatArray == 'object' && 'length' in repeatArray) {
+                            repeatCount = repeatArray['length'] || 0;
+                        } else {
+                            repeatCount = repeatArray || 0;
+                            repeatArray = null;
+                        }
                     }
                     // If a count value is provided (>0), always output that number of items
                     if ('count' in repeatParam)

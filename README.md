@@ -35,8 +35,8 @@ Here’s a comparison between `foreach` and `repeat` for a data table:
 
 The `repeat` binding accepts a single parameter of the number of repetitions or an array to iterate. It also accepts an object literal with these parameters provided through the `count` or `foreach` property. If the parameter is an observable, the `repeat` binding will add or remove elements whenever you update it. Here are the main parameters:
 
-* `count` — the number of repetitions
-* `foreach` — an array (or observableArray) over which to iterate. If both the `foreach` and (non-zero) `count` parameters are given, the `count` value takes precedence even if it’s larger than the array length.
+* `foreach` — an array (or observableArray) over which to iterate, or the number of repetitions
+* `count` — the number of repetitions. If both the `foreach` and (non-zero) `count` parameters are given, the `count` value takes precedence. This allows you to provide an array using `foreach` but always output a fixed number of items, even if it’s larger than the array length.
 * `limit` — an upper limit on the number of repetitions, if non-zero (optional)
 
 The following optional parameters do not support updates (and can’t be observable):
