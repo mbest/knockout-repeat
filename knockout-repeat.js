@@ -1,15 +1,15 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.5.0
+// Version 1.5.1
 
 (function(factory) {
-    if (typeof define === 'function' && define['amd']) {
+    if (typeof define === 'function' && define.amd) {
         // [1] AMD anonymous module
         define(['knockout'], factory);
     } else {
         // [2] No module loader (plain <script> tag) - put directly in global namespace
-        factory(window['ko']);
+        factory(window.ko);
     }
 })(function(ko) {
 
@@ -23,24 +23,24 @@ function findPropertyName(obj, equals) {
 
 var koProtoName = findPropertyName(ko.observable.fn, ko.observable);
 
-ko.bindingHandlers['repeat'] = {
+ko.bindingHandlers.repeat = {
     'flags': ko.bindingFlags.contentBind,
     'init': function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 
         // Read and set fixed options--these options cannot be changed
         var repeatParam = ko.utils.unwrapObservable(valueAccessor());
         if (repeatParam && typeof repeatParam == 'object' && !('length' in repeatParam)) {
-            var repeatIndex = repeatParam['index'],
-                repeatData = repeatParam['item'],
-                repeatStep = repeatParam['step'],
-                repeatReversed = repeatParam['reverse'],
-                repeatBind = repeatParam['bind'],
-                repeatInit = repeatParam['init'],
-                repeatUpdate = repeatParam['update'];
+            var repeatIndex = repeatParam.index,
+                repeatData = repeatParam.item,
+                repeatStep = repeatParam.step,
+                repeatReversed = repeatParam.reverse,
+                repeatBind = repeatParam.bind,
+                repeatInit = repeatParam.init,
+                repeatUpdate = repeatParam.update;
         }
         // Set default values for options that need it
         repeatIndex = repeatIndex || '$index';
-        repeatData = repeatData || ko.bindingHandlers['repeat']['itemName'] || '$item';
+        repeatData = repeatData || ko.bindingHandlers.repeat.itemName || '$item';
         repeatStep = repeatStep || 1;
         repeatReversed = repeatReversed || false;
 
@@ -105,12 +105,12 @@ ko.bindingHandlers['repeat'] = {
             if (repeatParam && typeof repeatParam == 'object') {
                 if ('length' in repeatParam) {
                     repeatArray = repeatParam;
-                    repeatCount = repeatArray['length'];
+                    repeatCount = repeatArray.length;
                 } else {
                     if ('foreach' in repeatParam) {
-                        repeatArray = ko.utils.unwrapObservable(repeatParam['foreach']);
+                        repeatArray = ko.utils.unwrapObservable(repeatParam.foreach);
                         if (repeatArray && typeof repeatArray == 'object' && 'length' in repeatArray) {
-                            repeatCount = repeatArray['length'] || 0;
+                            repeatCount = repeatArray.length || 0;
                         } else {
                             repeatCount = repeatArray || 0;
                             repeatArray = null;
@@ -118,10 +118,10 @@ ko.bindingHandlers['repeat'] = {
                     }
                     // If a count value is provided (>0), always output that number of items
                     if ('count' in repeatParam)
-                        repeatCount = ko.utils.unwrapObservable(repeatParam['count']) || repeatCount;
+                        repeatCount = ko.utils.unwrapObservable(repeatParam.count) || repeatCount;
                     // If a limit is provided, don't output more than the limit
                     if ('limit' in repeatParam)
-                        repeatCount = Math.min(repeatCount, ko.utils.unwrapObservable(repeatParam['limit'])) || repeatCount;
+                        repeatCount = Math.min(repeatCount, ko.utils.unwrapObservable(repeatParam.limit)) || repeatCount;
                 }
             } else {
                 repeatCount = repeatParam || 0;
@@ -133,7 +133,7 @@ ko.bindingHandlers['repeat'] = {
             }
 
             // Notify existing nodes of change
-            notificationObservable["notifySubscribers"]();
+            notificationObservable.notifySubscribers();
 
             // Add nodes to end if array is longer (also initially populates nodes)
             for (; lastRepeatCount < repeatCount; lastRepeatCount+=repeatStep) {
@@ -164,9 +164,9 @@ ko.bindingHandlers['repeat'] = {
             if (repeatUpdate) {
                 repeatUpdate(parent);
             }
-        }, null, {'disposeWhenNodeIsRemoved': placeholder});
+        }, null, {disposeWhenNodeIsRemoved: placeholder});
 
-        return { 'controlsDescendantBindings': true, 'subscribable': subscribable };
+        return { controlsDescendantBindings: true, subscribable: subscribable };
     }
 };
 });
