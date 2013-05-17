@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.5.1
+// Version 1.5.2
 
 (function(factory) {
     if (typeof define === 'function' && define.amd) {
@@ -45,6 +45,7 @@ ko.bindingHandlers.repeat = {
         repeatReversed = repeatReversed || false;
 
         // First clean the element node and remove node's binding
+        var origBindString = element.getAttribute('data-bind');
         ko.cleanNode(element);
         element.removeAttribute('data-bind');
 
@@ -64,7 +65,7 @@ ko.bindingHandlers.repeat = {
         }
 
         // Original element is no longer needed: delete it and create a placeholder comment
-        var parent = element.parentNode, placeholder = document.createComment('ko_repeatplaceholder');
+        var parent = element.parentNode, placeholder = document.createComment('ko_repeatplaceholder ' + origBindString);
         parent.replaceChild(placeholder, element);
 
         // Set up persistent data
