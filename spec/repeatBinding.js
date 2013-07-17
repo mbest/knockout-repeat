@@ -179,22 +179,43 @@ describe('Binding: Repeat', function() {
     });
 
     it('Should be able to update observable and non-observable items using a two-way binding', function() {
-        testNode.innerHTML = "<div data-bind='repeat: someitems'><input data-bind='value: $item' /></div>";
-        var someitems = [ ko.observable('A'), 'B' ];
-        ko.applyBindings({ someitems: someitems }, testNode);
+        var observableItem = ko.observable('C'), someItems = ['A','B',observableItem];
 
-        expect(testNode.childNodes[0].childNodes[0].value).toEqual('A');
-        expect(testNode.childNodes[1].childNodes[0].value).toEqual('B');
+        testNode.innerHTML = "<input data-bind='repeat: someItems' data-repeat-bind='value: $item'/>";
+        ko.applyBindings({someItems: someItems}, testNode);
+        expect(testNode).toHaveValues(['A', 'B', 'C', undefined]);  // includes trailing 'undefined' for the comment that repeat inserts
 
-        // Now update the value of the observable item through the input
-        testNode.childNodes[0].childNodes[0].value = 'X';
-        ko.utils.triggerEvent(testNode.childNodes[0].childNodes[0], "change");
-        expect(someitems[0]()).toEqual('X');
+        // Update a value binding for a non-observable value and check that the array was updated
+        testNode.childNodes[0].value = 'X';
+        ko.utils.triggerEvent(testNode.childNodes[0], "change");
+        expect(ko.toJS(someItems)).toEqual(['X','B','C']);
 
-        // and now the non-observable item
-        testNode.childNodes[1].childNodes[0].value = 'Y';
-        ko.utils.triggerEvent(testNode.childNodes[1].childNodes[0], "change");
-        expect(someitems[1]).toEqual('Y');
+        // Update a value binding for the observable value and check that the observable was updated
+        testNode.childNodes[2].value = 'Z';
+        ko.utils.triggerEvent(testNode.childNodes[2], "change");
+        expect(observableItem()).toEqual('Z');
+        expect(ko.toJS(someItems)).toEqual(['X','B','Z']);
+    });
+
+    it('Should notify changes to an observable array when updating a item in the array', function() {
+        var someItems = ko.observableArray(['A','B','C']), notifiedValues = [], beforeNotifiedValues = [];
+        someItems.subscribe(function (value) {
+            notifiedValues.push(value ? value.slice(0) : value);
+        });
+        someItems.subscribe(function (value) {
+            beforeNotifiedValues.push(value ? value.slice(0) : value);
+        }, null, "beforeChange");
+
+        testNode.innerHTML = "<input data-bind='repeat: someItems' data-repeat-bind='value: $item'/>";
+        ko.applyBindings({someItems: someItems}, testNode);
+        expect(testNode).toHaveValues(['A', 'B', 'C', undefined]);  // includes trailing 'undefined' for the comment that repeat inserts
+
+        // update a value binding and check that the array was updated and notifications were posted
+        testNode.childNodes[0].value = 'X';
+        ko.utils.triggerEvent(testNode.childNodes[0], "change");
+        expect(someItems()).toEqual(['X','B','C']);
+        expect(notifiedValues).toEqual([['X','B','C']]);
+        expect(beforeNotifiedValues).toEqual([['A','B','C']]);
     });
 
     it('Should be able to nest \'repeat\' and access binding contexts both during and after binding', function() {
