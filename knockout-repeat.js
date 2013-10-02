@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.5.3
+// Version 1.5.4
 
 (function(factory) {
     if (typeof define === 'function' && define.amd) {
@@ -14,6 +14,7 @@
 })(function(ko) {
 
 if (!ko.bindingFlags) { ko.bindingFlags = {}; }
+if (!ko.unwrap) { ko.unwrap = ko.utils.unwrapObservable; }
 
 function findPropertyName(obj, equals) {
     for (var a in obj)
@@ -25,10 +26,10 @@ var koProtoName = findPropertyName(ko.observable.fn, ko.observable);
 
 ko.bindingHandlers.repeat = {
     'flags': ko.bindingFlags.contentBind,
-    'init': function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    'init': function(element, valueAccessor, allBindingsAccessor, xxx, bindingContext) {
 
         // Read and set fixed options--these options cannot be changed
-        var repeatParam = ko.utils.unwrapObservable(valueAccessor());
+        var repeatParam = ko.unwrap(valueAccessor());
         if (repeatParam && typeof repeatParam == 'object' && !('length' in repeatParam)) {
             var repeatIndex = repeatParam.index,
                 repeatData = repeatParam.item,
@@ -81,16 +82,20 @@ ko.bindingHandlers.repeat = {
             function makeArrayItemAccessor(index) {
                 var f = function(newValue) {
                     var item = repeatArray[index];
+                    // Reading the value of the item
                     if (!arguments.length) {
                         notificationObservable();   // for dependency tracking
-                        return ko.utils.unwrapObservable(item);
-                    } else if (ko.isObservable(item)) {
-                        return item(newValue);
+                        return ko.unwrap(item);
+                    }
+                    // Writing a value to the item
+                    if (ko.isObservable(item)) {
+                        item(newValue);
                     } else if (arrayObservable && arrayObservable.splice) {
                         arrayObservable.splice(index, 1, newValue);
                     } else {
                         repeatArray[index] = newValue;
                     }
+                    return this;
                 };
                 // Pretend that our accessor function is an observable
                 f[koProtoName] = ko.observable;
@@ -99,19 +104,19 @@ ko.bindingHandlers.repeat = {
 
             function makeBinding(item, index, context) {
                 return repeatArray
-                    ? function() { return repeatBind.call(viewModel, item, index, context); }
-                    : function() { return repeatBind.call(viewModel, index, context); }
+                    ? function() { return repeatBind.call(bindingContext.$data, item, index, context); }
+                    : function() { return repeatBind.call(bindingContext.$data, index, context); }
             }
 
             // Read and set up variable options--these options can change and will update the binding
-            var paramObservable = valueAccessor(), repeatParam = ko.utils.unwrapObservable(paramObservable), repeatCount = 0;
+            var paramObservable = valueAccessor(), repeatParam = ko.unwrap(paramObservable), repeatCount = 0;
             if (repeatParam && typeof repeatParam == 'object') {
                 if ('length' in repeatParam) {
                     repeatArray = repeatParam;
                     repeatCount = repeatArray.length;
                 } else {
                     if ('foreach' in repeatParam) {
-                        repeatArray = ko.utils.unwrapObservable(paramObservable = repeatParam.foreach);
+                        repeatArray = ko.unwrap(paramObservable = repeatParam.foreach);
                         if (repeatArray && typeof repeatArray == 'object' && 'length' in repeatArray) {
                             repeatCount = repeatArray.length || 0;
                         } else {
@@ -121,10 +126,10 @@ ko.bindingHandlers.repeat = {
                     }
                     // If a count value is provided (>0), always output that number of items
                     if ('count' in repeatParam)
-                        repeatCount = ko.utils.unwrapObservable(repeatParam.count) || repeatCount;
+                        repeatCount = ko.unwrap(repeatParam.count) || repeatCount;
                     // If a limit is provided, don't output more than the limit
                     if ('limit' in repeatParam)
-                        repeatCount = Math.min(repeatCount, ko.utils.unwrapObservable(repeatParam.limit)) || repeatCount;
+                        repeatCount = Math.min(repeatCount, ko.unwrap(repeatParam.limit)) || repeatCount;
                 }
                 arrayObservable = repeatArray && ko.isObservable(paramObservable) ? paramObservable : null;
             } else {

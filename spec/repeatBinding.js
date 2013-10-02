@@ -88,10 +88,7 @@ describe('Binding: Repeat', function() {
         expect(testNode).toContainText('first childsecond childlast child');
     });
 
-    /* This currently doesn't work with the base Knockout because applyBindingsToNode returns an object
-       with a minified property. See https://github.com/mbest/knockout-repeat/issues/6
-       It does work with my smart-binding fork because it allows applyBindingsToNode to handle the
-       child binding directly. */
+    /* This requires at least Knockout 3.0 */
     it('Should be able to use \'with\' to create a child context using function syntax', function() {
         testNode.innerHTML = "<div data-bind='repeat: {foreach: someItems, bind: function($item) { return { with: $item }}}'><span data-bind='text: childProp'></span></div>";
         var someItems = ko.observableArray([
@@ -105,22 +102,20 @@ describe('Binding: Repeat', function() {
         expect(testNode).toContainText('first childsecond childlast child');
     });
 
-    it('Should be able to set item to \'$data\' to create a child context (if supported)', function() {
-        try {
-            ko.bindingHandlers.repeat.itemName = '$data';
-            testNode.innerHTML = "<div data-bind='repeat: someItems'><span data-bind='text: childProp'></span></div>";
-            var someItems = ko.observableArray([
-                { childProp: 'first child' },
-                { childProp: 'second child' }
-            ]);
-            ko.applyBindings({ someItems: someItems }, testNode);
-            expect(testNode).toContainText('first childsecond child');
-            // add an item
-            someItems.push({ childProp: 'last child' });
-            expect(testNode).toContainText('first childsecond childlast child');
-        } finally {
-            ko.bindingHandlers.repeat.itemName = undefined;
-        }
+    /* This requires at least Knockout 3.0 */
+    it('Should be able to set item to \'$data\' to create a child context', function() {
+        this.restoreAfter(ko.bindingHandlers.repeat, 'itemName');
+        ko.bindingHandlers.repeat.itemName = '$data';
+        testNode.innerHTML = "<div data-bind='repeat: someItems'><span data-bind='text: childProp'></span></div>";
+        var someItems = ko.observableArray([
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ]);
+        ko.applyBindings({ someItems: someItems }, testNode);
+        expect(testNode).toContainText('first childsecond child');
+        // add an item
+        someItems.push({ childProp: 'last child' });
+        expect(testNode).toContainText('first childsecond childlast child');
     });
 
     it('Should be able to use $index to reference each array item being bound', function() {
