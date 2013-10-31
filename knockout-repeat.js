@@ -13,23 +13,17 @@
     }
 })(function(ko) {
 
-if (!ko.bindingFlags) { ko.bindingFlags = {}; }
-if (!ko.unwrap) { ko.unwrap = ko.utils.unwrapObservable; }
+var ko_bindingFlags = ko.bindingFlags || {};
+var ko_unwrap = ko.utils.unwrapObservable;
 
-function findPropertyName(obj, equals) {
-    for (var a in obj)
-        if (obj.hasOwnProperty(a) && obj[a] === equals)
-            return a;
-}
-
-var koProtoName = findPropertyName(ko.observable.fn, ko.observable);
+var koProtoName = '__ko_proto__';
 
 ko.bindingHandlers.repeat = {
-    'flags': ko.bindingFlags.contentBind,
-    'init': function(element, valueAccessor, allBindingsAccessor, xxx, bindingContext) {
+    flags: ko_bindingFlags.contentBind,
+    init: function(element, valueAccessor, allBindingsAccessor, xxx, bindingContext) {
 
         // Read and set fixed options--these options cannot be changed
-        var repeatParam = ko.unwrap(valueAccessor());
+        var repeatParam = ko_unwrap(valueAccessor());
         if (repeatParam && typeof repeatParam == 'object' && !('length' in repeatParam)) {
             var repeatIndex = repeatParam.index,
                 repeatData = repeatParam.item,
@@ -78,14 +72,14 @@ ko.bindingHandlers.repeat = {
             repeatInit(parent);
         }
 
-        var subscribable = ko.dependentObservable(function() {
+        var subscribable = ko.computed(function() {
             function makeArrayItemAccessor(index) {
                 var f = function(newValue) {
                     var item = repeatArray[index];
                     // Reading the value of the item
                     if (!arguments.length) {
                         notificationObservable();   // for dependency tracking
-                        return ko.unwrap(item);
+                        return ko_unwrap(item);
                     }
                     // Writing a value to the item
                     if (ko.isObservable(item)) {
@@ -109,14 +103,14 @@ ko.bindingHandlers.repeat = {
             }
 
             // Read and set up variable options--these options can change and will update the binding
-            var paramObservable = valueAccessor(), repeatParam = ko.unwrap(paramObservable), repeatCount = 0;
+            var paramObservable = valueAccessor(), repeatParam = ko_unwrap(paramObservable), repeatCount = 0;
             if (repeatParam && typeof repeatParam == 'object') {
                 if ('length' in repeatParam) {
                     repeatArray = repeatParam;
                     repeatCount = repeatArray.length;
                 } else {
                     if ('foreach' in repeatParam) {
-                        repeatArray = ko.unwrap(paramObservable = repeatParam.foreach);
+                        repeatArray = ko_unwrap(paramObservable = repeatParam.foreach);
                         if (repeatArray && typeof repeatArray == 'object' && 'length' in repeatArray) {
                             repeatCount = repeatArray.length || 0;
                         } else {
@@ -126,10 +120,10 @@ ko.bindingHandlers.repeat = {
                     }
                     // If a count value is provided (>0), always output that number of items
                     if ('count' in repeatParam)
-                        repeatCount = ko.unwrap(repeatParam.count) || repeatCount;
+                        repeatCount = ko_unwrap(repeatParam.count) || repeatCount;
                     // If a limit is provided, don't output more than the limit
                     if ('limit' in repeatParam)
-                        repeatCount = Math.min(repeatCount, ko.unwrap(repeatParam.limit)) || repeatCount;
+                        repeatCount = Math.min(repeatCount, ko_unwrap(repeatParam.limit)) || repeatCount;
                 }
                 arrayObservable = repeatArray && ko.isObservable(paramObservable) ? paramObservable : null;
             } else {
@@ -155,9 +149,7 @@ ko.bindingHandlers.repeat = {
                 if (repeatArray && repeatData == '$data') {
                     var newContext = bindingContext.createChildContext(makeArrayItemAccessor(lastRepeatCount));
                 } else {
-                    var newContext = bindingContext.extend
-                        ? bindingContext.extend()
-                        : ko.utils.extend(new bindingContext.constructor(), bindingContext);
+                    var newContext = bindingContext.extend();
                     if (repeatArray)
                         newContext[repeatData] = makeArrayItemAccessor(lastRepeatCount);
                 }
