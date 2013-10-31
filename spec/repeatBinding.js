@@ -17,7 +17,8 @@ describe('Binding: Repeat', function() {
         testNode.innerHTML = "<span data-bind='repeat: {foreach: someItem, bind: \"text: someItem.nonExistentChildProp\"}'></span>";
         expect(testNode.childNodes.length).toEqual(1);
         ko.applyBindings({ someItem: null }, testNode);
-        expect(testNode.childNodes.length).toEqual(1);	// leaves placeholder comment node
+        expect(testNode).toContainText('');
+        expect(testNode.childNodes.length).toBeGreaterThan(0);	// leaves placeholder comment node
         expect(testNode.childNodes[0].nodeType).toEqual(8);
     });
 
@@ -116,6 +117,16 @@ describe('Binding: Repeat', function() {
             someItems.push({ childProp: 'last child' });
             expect(testNode).toContainText('first childsecond childlast child');
         });
+
+        it('Should work with observable view models in Knockout 3.x', function() {
+            testNode.innerHTML = "<span data-bind='repeat: {foreach: someItems, count: count}' data-repeat-bind='text: $item() || \"X\"'></span>";
+            var someItems = ['A','B','C','D'], vm = ko.observable({someItems: [], count: 0});
+            ko.applyBindings(vm, testNode);
+            expect(testNode).toContainText('');
+            // Change count using updated viewModel
+            vm({someItems: someItems, count: 2});
+            expect(testNode).toContainText('AB');
+        });
     }
 
     it('Should be able to use $index to reference each array item being bound', function() {
@@ -174,26 +185,33 @@ describe('Binding: Repeat', function() {
     });
 
     it('Should be able to update observable and non-observable items using a two-way binding', function() {
-        var observableItem = ko.observable('C'), someItems = ['A','B',observableItem];
+        var observableItem = ko.observable('C'), someItems = ['A','B',observableItem], skip = 0;
 
         testNode.innerHTML = "<input data-bind='repeat: someItems' data-repeat-bind='value: $item'/>";
         ko.applyBindings({someItems: someItems}, testNode);
-        expect(testNode).toHaveValues(['A', 'B', 'C', undefined]);  // includes trailing 'undefined' for the comment that repeat inserts
+        if (testNode.childNodes[0].nodeType == 8) {
+            // When using Knockout 3.0, there will also be a leading comment
+            skip = 1;
+            expect(testNode).toHaveValues([undefined, 'A', 'B', 'C', undefined]);
+        } else {
+            // includes trailing 'undefined' for the comment that repeat inserts
+            expect(testNode).toHaveValues(['A', 'B', 'C', undefined]);
+        }
 
         // Update a value binding for a non-observable value and check that the array was updated
-        testNode.childNodes[0].value = 'X';
-        ko.utils.triggerEvent(testNode.childNodes[0], "change");
+        testNode.childNodes[0+skip].value = 'X';
+        ko.utils.triggerEvent(testNode.childNodes[0+skip], "change");
         expect(ko.toJS(someItems)).toEqual(['X','B','C']);
 
         // Update a value binding for the observable value and check that the observable was updated
-        testNode.childNodes[2].value = 'Z';
-        ko.utils.triggerEvent(testNode.childNodes[2], "change");
+        testNode.childNodes[2+skip].value = 'Z';
+        ko.utils.triggerEvent(testNode.childNodes[2+skip], "change");
         expect(observableItem()).toEqual('Z');
         expect(ko.toJS(someItems)).toEqual(['X','B','Z']);
     });
 
     it('Should notify changes to an observable array when updating a item in the array', function() {
-        var someItems = ko.observableArray(['A','B','C']), notifiedValues = [], beforeNotifiedValues = [];
+        var someItems = ko.observableArray(['A','B','C']), notifiedValues = [], beforeNotifiedValues = [], skip = 0;
         someItems.subscribe(function (value) {
             notifiedValues.push(value ? value.slice(0) : value);
         });
@@ -203,11 +221,18 @@ describe('Binding: Repeat', function() {
 
         testNode.innerHTML = "<input data-bind='repeat: someItems' data-repeat-bind='value: $item'/>";
         ko.applyBindings({someItems: someItems}, testNode);
-        expect(testNode).toHaveValues(['A', 'B', 'C', undefined]);  // includes trailing 'undefined' for the comment that repeat inserts
+        if (testNode.childNodes[0].nodeType == 8) {
+            // When using Knockout 3.0, there will also be a leading comment
+            skip = 1;
+            expect(testNode).toHaveValues([undefined, 'A', 'B', 'C', undefined]);
+        } else {
+            // includes trailing 'undefined' for the comment that repeat inserts
+            expect(testNode).toHaveValues(['A', 'B', 'C', undefined]);
+        }
 
         // update a value binding and check that the array was updated and notifications were posted
-        testNode.childNodes[0].value = 'X';
-        ko.utils.triggerEvent(testNode.childNodes[0], "change");
+        testNode.childNodes[0+skip].value = 'X';
+        ko.utils.triggerEvent(testNode.childNodes[0+skip], "change");
         expect(someItems()).toEqual(['X','B','C']);
         expect(notifiedValues).toEqual([['X','B','C']]);
         expect(beforeNotifiedValues).toEqual([['A','B','C']]);
@@ -219,7 +244,7 @@ describe('Binding: Repeat', function() {
                                     + "(Val: <span data-bind='text: $child'></span>)"
                                 + "</div>"
                            + "</div>";
-        var viewModel = {
+        var skip = 0, viewModel = {
             rootVal: 'ROOTVAL',
             items: ko.observableArray([
                 { children: ko.observableArray(['A1', 'A2', 'A3']) },
@@ -227,13 +252,17 @@ describe('Binding: Repeat', function() {
             ])
         };
         ko.applyBindings(viewModel, testNode);
+        if (testNode.childNodes[0].nodeType == 8) {
+            // When using Knockout 3.0, there will also be a leading comment
+            skip = 1;
+        }
 
         // Verify we can access binding contexts during binding
-        expect(testNode.childNodes[0]).toContainText("(Val: A1)(Val: A2)(Val: A3)");
-        expect(testNode.childNodes[1]).toContainText("(Val: B1)(Val: B2)");
+        expect(testNode.childNodes[0+skip]).toContainText("(Val: A1)(Val: A2)(Val: A3)");
+        expect(testNode.childNodes[1+skip]).toContainText("(Val: B1)(Val: B2)");
 
         // Verify we can access them later
-        var firstInnerTextNode = testNode.childNodes[0].childNodes[0].childNodes[1];
+        var firstInnerTextNode = testNode.childNodes[0+skip].childNodes[0+skip].childNodes[1];
         expect(firstInnerTextNode.nodeType).toEqual(1); // The first span associated with A1
         expect(ko.contextFor(firstInnerTextNode).$child()).toEqual("A1");
         expect(ko.contextFor(firstInnerTextNode).$root.rootVal).toEqual("ROOTVAL");
@@ -343,5 +372,17 @@ describe('Binding: Repeat', function() {
         testNode.innerHTML = "<span data-bind=\"repeat: {foreach: 5, bind: 'text: $index'}\"></span>";
         ko.applyBindings(null, testNode);
         expect(testNode).toContainText('01234');
+    });
+
+    it('Should support a virtual element syntax', function() {
+        testNode.innerHTML = "-<!--ko repeat: someItems--><span data-bind='text: $index + $item().childProp'></span><!--/ko-->-";
+        var someItems = ko.observableArray([
+            { childProp: 'first child' },
+            { childProp: 'second child' }
+        ]);
+        ko.applyBindings({ someItems: someItems }, testNode);
+        expect(testNode).toContainText('-0first child1second child-');
+        someItems.push({ childProp: 'third child' });
+        expect(testNode).toContainText('-0first child1second child2third child-');
     });
 });

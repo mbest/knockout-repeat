@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 1.5.4
+// Version 2.0.0
 
 (function(factory) {
     if (typeof define === 'function' && define.amd) {
@@ -13,13 +13,38 @@
     }
 })(function(ko) {
 
+if (!ko.virtualElements)
+    throw Error('Repeat requires at least Knockout 2.1');
+
 var ko_bindingFlags = ko.bindingFlags || {};
 var ko_unwrap = ko.utils.unwrapObservable;
 
 var koProtoName = '__ko_proto__';
 
+if (ko.version >= "3.0.0") {
+    // In Knockout 3.0.0, use the node preprocessor to replace a node with a repeat binding with a virtual element
+    var provider = ko.bindingProvider.instance, previousPreprocessFn = provider.preprocessNode;
+    provider.preprocessNode = function(node) {
+        var newNodes, nodeBinding;
+        if (!previousPreprocessFn || !(newNodes = previousPreprocessFn.call(this, node))) {
+            if (node.nodeType === 1 && (nodeBinding = node.getAttribute('data-bind'))) {
+                if (/^\s*repeat\s*:/.test(nodeBinding)) {
+                    var leadingComment = document.createComment('ko ' + nodeBinding),
+                        trailingComment = document.createComment('/ko');
+                    node.parentNode.insertBefore(leadingComment, node);
+                    node.parentNode.insertBefore(trailingComment, node.nextSibling);
+                    node.removeAttribute('data-bind');
+                    newNodes = [leadingComment, node, trailingComment];
+                }
+            }
+        }
+        return newNodes;
+    };
+}
+
+ko.virtualElements.allowedBindings.repeat = true;
 ko.bindingHandlers.repeat = {
-    flags: ko_bindingFlags.contentBind,
+    flags: ko_bindingFlags.contentBind | ko_bindingFlags.canUseVirtual,
     init: function(element, valueAccessor, allBindingsAccessor, xxx, bindingContext) {
 
         // Read and set fixed options--these options cannot be changed
@@ -39,10 +64,29 @@ ko.bindingHandlers.repeat = {
         repeatStep = repeatStep || 1;
         repeatReversed = repeatReversed || false;
 
-        // First clean the element node and remove node's binding
-        var origBindString = element.getAttribute('data-bind');
-        ko.cleanNode(element);
-        element.removeAttribute('data-bind');
+        var parent = element.parentNode, placeholder;
+        if (element.nodeType == 8) {    // virtual element
+            // Extract the "children" and find the single element node
+            var childNodes = ko.utils.arrayFilter(ko.virtualElements.childNodes(element), function(node) { return node.nodeType == 1;});
+            if (childNodes.length !== 1) {
+                throw Error("Repeat binding requires a single element to repeat");
+            }
+            ko.virtualElements.emptyNode(element);
+
+            // The placeholder is the closing comment normally, or the opening comment if reversed
+            placeholder = repeatReversed ? element : element.nextSibling;
+            // The element to repeat is the contained element
+            element = childNodes[0];
+        } else {    // regular element
+            // First clean the element node and remove node's binding
+            var origBindString = element.getAttribute('data-bind');
+            ko.cleanNode(element);
+            element.removeAttribute('data-bind');
+
+            // Original element is no longer needed: delete it and create a placeholder comment
+            placeholder = document.createComment('ko_repeatplaceholder ' + origBindString);
+            parent.replaceChild(placeholder, element);
+        }
 
         // extract and remove a data-repeat-bind attribute, if present
         if (!repeatBind) {
@@ -58,10 +102,6 @@ ko.bindingHandlers.repeat = {
             cleanNode.setAttribute('data-bind', repeatBind);
             repeatBind = null;
         }
-
-        // Original element is no longer needed: delete it and create a placeholder comment
-        var parent = element.parentNode, placeholder = document.createComment('ko_repeatplaceholder ' + origBindString);
-        parent.replaceChild(placeholder, element);
 
         // Set up persistent data
         var lastRepeatCount = 0,
