@@ -7,8 +7,11 @@
     if (typeof define === 'function' && define.amd) {
         // [1] AMD anonymous module
         define(['knockout'], factory);
+    } else if (typeof exports === 'object') {
+        // [2] commonJS
+        factory(require('knockout'));
     } else {
-        // [2] No module loader (plain <script> tag) - put directly in global namespace
+        // [3] No module loader (plain <script> tag) - put directly in global namespace
         factory(window.ko);
     }
 })(function(ko) {
