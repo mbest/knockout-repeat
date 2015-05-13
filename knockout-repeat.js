@@ -1,7 +1,7 @@
 // REPEAT binding for Knockout http://knockoutjs.com/
 // (c) Michael Best
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-// Version 2.0.0
+// Version 2.1.0
 
 (function(factory) {
     if (typeof define === 'function' && define.amd) {
