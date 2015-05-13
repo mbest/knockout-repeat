@@ -32,8 +32,8 @@ if (ko.version >= "3.0.0") {
         if (!previousPreprocessFn || !(newNodes = previousPreprocessFn.call(this, node))) {
             if (node.nodeType === 1 && (nodeBinding = node.getAttribute('data-bind'))) {
                 if (/^\s*repeat\s*:/.test(nodeBinding)) {
-                    var leadingComment = document.createComment('ko ' + nodeBinding),
-                        trailingComment = document.createComment('/ko');
+                    var leadingComment = node.ownerDocument.createComment('ko ' + nodeBinding),
+                        trailingComment = node.ownerDocument.createComment('/ko');
                     node.parentNode.insertBefore(leadingComment, node);
                     node.parentNode.insertBefore(trailingComment, node.nextSibling);
                     node.removeAttribute('data-bind');
@@ -87,7 +87,7 @@ ko.bindingHandlers.repeat = {
             element.removeAttribute('data-bind');
 
             // Original element is no longer needed: delete it and create a placeholder comment
-            placeholder = document.createComment('ko_repeatplaceholder ' + origBindString);
+            placeholder = element.ownerDocument.createComment('ko_repeatplaceholder ' + origBindString);
             parent.replaceChild(placeholder, element);
         }
 
